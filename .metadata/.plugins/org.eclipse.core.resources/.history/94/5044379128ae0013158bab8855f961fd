@@ -1,0 +1,35 @@
+package decorateur;
+
+public class DecoratorPatternMain {
+
+	public static void main(String[] args) {
+		
+		B a = new B();
+		System.out.println("I a = new B() "+getTest(a));
+		A b = new A();
+		System.out.println("I b = new A() "+getTest(b));
+		 B aa = (B)(new A());
+		System.out.println("A aa = (A)(new B()); "+getTest(aa));
+
+		
+		
+		// Création de l'implementation et des décorateurs
+//		final Implementation lImpl = new Implementation();
+//		final ImplDecorateurB lImplDecB = new ImplDecorateurB(lImpl);
+//		final ImplDecorateurA lImplDecA = new ImplDecorateurA(lImplDecB);
+//
+//		// Appel de la méthode du décorateur "conteneur"
+//		lImplDecA.operation();
+
+		// Affichage :
+		// ImplDecorateurA avant
+		// ImplDecorateurB avant
+		// Implementation
+		// ImplDecorateurB apres
+		// ImplDecorateurA apres
+	}
+	
+	public static int getTest(A b){
+		return b.getI();
+	}
+}

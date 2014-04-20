@@ -1,0 +1,8 @@
+package com.journaldev.threads;
+
+public class TreadSafety {
+
+	public static void main(String[] agrs) throws InterruptedException {
+
+	}
+}

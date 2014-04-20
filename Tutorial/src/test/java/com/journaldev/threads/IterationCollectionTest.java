@@ -1,0 +1,235 @@
+package com.journaldev.threads;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class IterationCollectionTest {
+
+	private static final int COLLECTION_SIZE = 500;
+
+	private static final int NUMBER_OF_THREAD_IN_PARALLEL = 8;
+
+	private static final int NUMBER_OF_TASKS = 50;
+
+	private static final long millis = 0;
+
+	private static final int nanos = 500;
+
+	private Exception exception = null;
+	private Collection<Integer> sharedSynchronizedCollection;
+	private Collection<Integer> sharedCollection;
+
+	Collection<Callable<Object>> tasks;
+
+	@Before
+	public void initTest() {
+		exception = null;
+
+		sharedSynchronizedCollection = Collections
+				.synchronizedSet(new HashSet<Integer>(COLLECTION_SIZE));
+		sharedCollection = new HashSet<Integer>(COLLECTION_SIZE);
+		for (int i = 0; i < COLLECTION_SIZE; i++) {
+			sharedSynchronizedCollection.add(i);
+			sharedCollection.add(i);
+		}
+
+		tasks = new ArrayList<Callable<Object>>();
+	}
+
+	/** Illustration 1) b. */
+	@Test
+	public void assertForLoopWithinSynchronizedBlockOnSharedSynchronizedCollectionInMultithreadEnvironnementWork()
+			throws Exception {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new SynchronyzedForAndModifyRunnable(
+					sharedSynchronizedCollection));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	/** Illustration 1) c. */
+	@Test
+	public void assertForLoopWithToArrayOnSharedSynchronizedCollectionInMultithreadEnvironnementWork()
+			throws Exception {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new ToArrayForAndModifyRunnable(
+					sharedSynchronizedCollection));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	/** Illustration 1) d. */
+	@Test
+	public void assertForLoopOnSharedCopyOnWriteArraySetInMultithreadEnvironnementWork()
+			throws Exception {
+		Collection<Integer> sharedCopyOnWriteArraySet = new CopyOnWriteArraySet<Integer>(
+				sharedCollection);
+
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new ForAndModifyRunnable(sharedCopyOnWriteArraySet));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	/** Illustration 2) a. */
+	@Test(expected = ConcurrentModificationException.class)
+	public void assertForLoopOnSharedSynchronizedCollectionInMultithreadEnvironnementDoesNotWork()
+			throws Exception {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new ForAndModifyRunnable(sharedSynchronizedCollection));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	/** Illustration 2) b. */
+	@Test(expected = ConcurrentModificationException.class)
+	public void assertForLoopWithinSynchronizedBlockOnSharedCollectionInMultithreadEnvironnementDoesNotWork()
+			throws Exception {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new SynchronyzedForAndModifyRunnable(sharedCollection));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	/** Illustration 2) c. */
+	@Test(expected = ConcurrentModificationException.class)
+	public void assertForLoopWithToArrayOnSharedCollectionInMultithreadEnvironnementDoesNotWork()
+			throws Exception {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			tasks.add(new ToArrayForAndModifyRunnable(sharedCollection));
+		}
+
+		ExecutorService threadPool = Executors
+				.newFixedThreadPool(NUMBER_OF_THREAD_IN_PARALLEL);
+		threadPool.invokeAll(tasks);
+		threadPool.shutdown();
+
+		throwExceptionIfHappened();
+	}
+
+	private class ForAndModifyRunnable implements Callable<Object> {
+
+		Collection<Integer> collection;
+
+		public ForAndModifyRunnable(Collection<Integer> collection) {
+			this.collection = collection;
+		}
+
+		public Object call() throws Exception {
+			try {
+				collection.add(collection.size());
+				for (Integer element : collection) {
+					workInLoop(element);
+				}
+			} catch (Exception e) {
+				saveException(e);
+			}
+			return null;
+		}
+	}
+
+	private class SynchronyzedForAndModifyRunnable implements Callable<Object> {
+
+		Collection<Integer> collection;
+
+		public SynchronyzedForAndModifyRunnable(Collection<Integer> collection) {
+			this.collection = collection;
+		}
+
+		public Object call() throws Exception {
+			try {
+				collection.add(collection.size());
+				synchronized (collection) {
+					for (Integer element : collection) {
+						workInLoop(element);
+					}
+				}
+			} catch (Exception e) {
+				saveException(e);
+			}
+			return null;
+		}
+	}
+
+	private class ToArrayForAndModifyRunnable implements Callable<Object> {
+
+		Collection<Integer> collection;
+
+		public ToArrayForAndModifyRunnable(Collection<Integer> collection) {
+			this.collection = collection;
+		}
+
+		public Object call() throws Exception {
+			try {
+				collection.add(collection.size());
+
+				Integer[] integers = collection.toArray(new Integer[collection
+						.size()]);
+				for (Integer element : integers) {
+					workInLoop(element);
+				}
+			} catch (Exception e) {
+				saveException(e);
+			}
+			return null;
+		}
+	}
+
+	private void saveException(Exception error) {
+		this.exception = error;
+	}
+
+	private void throwExceptionIfHappened() throws Exception {
+		if (exception != null) {
+			throw exception;
+		}
+	}
+
+	private void workInLoop(Integer element) {
+		try {
+			Thread.sleep(millis, nanos);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+}

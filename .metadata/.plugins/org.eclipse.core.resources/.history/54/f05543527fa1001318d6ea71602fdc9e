@@ -1,0 +1,9 @@
+package com.journaldev.threads;
+
+public class HashMapProcessor implements Runnable {
+
+	public void run() {
+
+	}
+
+}

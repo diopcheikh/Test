@@ -1,0 +1,5 @@
+package com.journaldev.threads;
+
+public enum EasySingleton {
+	INSTANCE
+}

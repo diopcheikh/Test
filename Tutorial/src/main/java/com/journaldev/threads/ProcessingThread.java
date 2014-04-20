@@ -1,0 +1,38 @@
+package com.journaldev.threads;
+
+public class ProcessingThread implements Runnable {
+	volatile private int count;
+	private String name;
+
+	public String getName() {
+		return name;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
+	public void run() {
+		for (int i = 1; i < 5; i++) {
+			processingSomething(i);
+			count++;
+		}
+	}
+
+	public void processingSomething(int i) {
+		// Processing the job
+		try {
+
+			name = Thread.currentThread().getName();
+			Thread.sleep(i * 1000);
+			if ("t1".equals(name)) {
+				Thread.sleep(i * 2 * 1000);
+			}
+
+			System.out.println("ThreadName : " + name);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+}

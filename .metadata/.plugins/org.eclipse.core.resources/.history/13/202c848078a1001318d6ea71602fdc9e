@@ -1,0 +1,18 @@
+package com.journaldev.threads;
+
+public class TreadSafety {
+
+	public static void main(String[] agrs) throws InterruptedException {
+		ProcessingThread pt = new ProcessingThread();
+		Thread t1 = new Thread(pt);
+		Thread t2 = new Thread(pt);
+		Thread t3 = new Thread(pt);
+		t1.start();
+		t2.start();
+		t3.start();
+		t3.join();
+		t1.join();
+		t2.join();
+		System.out.println("Processing counter : " + pt.getCount());
+	}
+}
